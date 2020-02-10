@@ -21,9 +21,13 @@ public class Game implements Runnable, Constants {
 	private Player xPlayer;
 	private Player oPlayer;
 
-	String xLine;
-	String oLine;
 
+	/**
+	 * Constructor
+	 * @param xSocket
+	 * @param oSocket
+	 * @param theBoard
+	 */
 	public Game(Socket xSocket, Socket oSocket, Board theBoard) {
 		this.xSocket = xSocket;
 		this.oSocket = oSocket;
@@ -31,11 +35,16 @@ public class Game implements Runnable, Constants {
 		createPlayers();
 	}
 
+	/**
+	 * Runs the game
+	 */
 	@Override
 	public void run() {
 		System.out.println("Started game");
-		// First read in x-Player's move, validate, add to the board, then send back the
-		// line to both client objects to display on both boards
+
+		/*
+		X player moves first, followed by O player. Winner is checked on each move and before every move
+		 */
 		while(true){
 			if(!checkWinner()){
 				addMarkX();
@@ -59,27 +68,25 @@ public class Game implements Runnable, Constants {
 		/*
 		Wait until X player makes a move
 		 */
-		xPlayerMove();
-		/*
-		Capture the X player move and add a mark on the Board.
-		 */
-		String[] temp = xLine.split(",");
+		String[] temp = xPlayerMove().split(",");
+
 		row = Integer.parseInt(temp[0]);
 		col = Integer.parseInt(temp[1]);
+
+		//Client expects response in this format - choice,row,col,mark(LETTERX or LETTERO)
+		//Constructing a response from server
+		String serverResponse = "";
+		serverResponse = 4 + "," + row + "," + col + "," + LETTER_X;
 		if(theBoard.checkMark(row,col)){
 			theBoard.addMark(row, col, xPlayer.getMark());
 			theBoard.display();
 			System.out.println("Sending X");
-			xSocketOut.println("4,"+xLine);
-			oSocketOut.println("4,"+xLine);
-			//Reset the socket to null
-			xLine = null;
+			xSocketOut.println(serverResponse);
+			oSocketOut.println(serverResponse);
 		}else{
 			System.out.println("Invalid move!");
 			addMarkX();
 		}
-
-
 	}
 
 	/**
@@ -87,17 +94,24 @@ public class Game implements Runnable, Constants {
 	 */
 	public void addMarkO(){
 		int row,col;
-		oPlayerMove();
-		String[] temp2 = oLine.split(",");
-		row = Integer.parseInt(temp2[0]);
-		col = Integer.parseInt(temp2[1]);
+		/*
+		Wait until O player makes a move
+		 */
+		String[] temp = oPlayerMove().split(",");
+		row = Integer.parseInt(temp[0]);
+		col = Integer.parseInt(temp[1]);
+
+		//Client expects response in this format - choice,row,col,mark(LETTERX or LETTERO)
+		//Constructing a response from server
+		String serverResponse = "";
+		serverResponse = 4 + "," + row + "," + col + "," + LETTER_O;
+
 		if(theBoard.checkMark(row,col)){
 			theBoard.addMark(row, col, oPlayer.getMark());
 			theBoard.display();
 			System.out.println("Sending O");
-			xSocketOut.println("4,"+oLine);
-			oSocketOut.println("4,"+oLine);
-			oLine = null;
+			xSocketOut.println(serverResponse);
+			oSocketOut.println(serverResponse);
 		}else{
 			System.out.println("Invalid move!");
 			addMarkO();
@@ -109,7 +123,7 @@ public class Game implements Runnable, Constants {
 	 * Blocking function for O Player until X Player makes a move
 	 * @return
 	 */
-	public Boolean xPlayerMove(){
+	public String xPlayerMove(){
 		/*
 		Block O until X makes a move
 		 */
@@ -118,25 +132,26 @@ public class Game implements Runnable, Constants {
 		xSocketOut.println("3," + "Make your move..");
 		xSocketOut.flush();
 
-		//Clear O sockets previous output
+		String xInput = "";
+
 		//6 indicates the client that it is the other player's turn
-		oSocketOut.println("6," + "Waiting for other player to play");
+		oSocketOut.println("6," + "Waiting for " + xPlayer.getName() + " to play..");
 		oSocketOut.flush();
-		while(xLine == null){
+		while(xInput.isEmpty()){
 			try{
-				xLine = xSocketIn.readLine();
-				System.out.println("Xline" + xLine);
+				xInput = xSocketIn.readLine();
+				System.out.println("xInput:" + xInput);
 			}catch (IOException e){
 				e.printStackTrace();
 			}
-		}return true;
+		}return xInput;
 	}
 
 	/**
 	 * Blocking function for X Player until O Player makes a move
 	 * @return
 	 */
-	public Boolean oPlayerMove(){
+	public String oPlayerMove(){
 		/*
 		Block X until O makes a move
 		 */
@@ -144,18 +159,18 @@ public class Game implements Runnable, Constants {
 		oSocketOut.println("3," + "Make your move..");
 		oSocketOut.flush();
 
+		String oInput = "";
 		//Clear X sockets previous output
-		xSocketOut.println("6," + "Waiting for other player to play");
+		xSocketOut.println("6," + "Waiting for " + oPlayer.getName() + " to play..");
 		xSocketOut.flush();
-		while(oLine == null){
+		while(oInput.isEmpty()){
 			try{
-
-				oLine = oSocketIn.readLine();
-				System.out.println("oLine" + oLine);
+				oInput = oSocketIn.readLine();
+				System.out.println("oInput:" + oInput);
 			}catch (IOException e){
 				e.printStackTrace();
 			}
-		}return true;
+		}return oInput;
 	}
 
 	/**
@@ -163,30 +178,27 @@ public class Game implements Runnable, Constants {
 	 * with the input and output streams
 	 */
 	public void createPlayers() {
-		// X-player
 		try {
+			// X-player
 			xSocketIn = new BufferedReader(new InputStreamReader(xSocket.getInputStream()));
 			xSocketOut = new PrintWriter(xSocket.getOutputStream(), true);
 
-			//Add code here for accepting User name from xSocketIn and oSocketIn.
-			//Create Player objects once the player names have been accepted.
-			//We could create blocking logic here as well to accept Player Names.
-			//Modify Player class's constructor to include player name.
+			//Create X player object. This accepts the Xplayer name as well
+			xPlayer = new Player(LETTER_X,acceptPlayerName(xSocketIn,xSocketOut));
 
-			//Call acceptPlayerName here twice. Once for xPlayer and once for oPlayer
-			xPlayer = new Player(xSocketIn, xSocketOut, LETTER_X);
-//			xSocketOut.println( "Setting player" + LETTER_X);
-			xSocketOut.println("1,"+LETTER_X);
-
+			// O-player
 			oSocketIn = new BufferedReader(new InputStreamReader(oSocket.getInputStream()));
 			oSocketOut = new PrintWriter(oSocket.getOutputStream(), true);
-			oPlayer = new Player(oSocketIn, oSocketOut, LETTER_O);
-//			oSocketOut.println("Setting player" + LETTER_O);
+
+			//Create O player object. This accepts the Oplayer name as well
+			oPlayer = new Player(LETTER_O,acceptPlayerName(oSocketIn,oSocketOut));
+
+			//Set the Player symbols
+			xSocketOut.println("1,"+LETTER_X);
 			oSocketOut.println("1,"+LETTER_O);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
@@ -197,19 +209,21 @@ public class Game implements Runnable, Constants {
 	 */
 	public String acceptPlayerName(BufferedReader socketIn,PrintWriter socketOut) {
 		//Tell client to send name
+		System.out.println("Asking client to send name..");
 		socketOut.println("7");
 		socketOut.flush();
 		String name = "";
 
 		//Block until we receive a name from the client.
-		while (name == null) {
+		while (name.isEmpty()) {
 			try {
 				name = socketIn.readLine();
 				System.out.println("Player name is: " + name);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}return name;
+		}
+		return name;
 	}
 
 	/**
@@ -222,14 +236,14 @@ public class Game implements Runnable, Constants {
 			gameEnd = true;
 			System.out.println("Game Over!, X is the winner!");
 			//Send winner messages to both X and O sockets
-			xSocketOut.println("5,"+"Game Over! X is the winner!");
-			oSocketOut.println("5,"+"Game Over! X is the winner!");
+			xSocketOut.println("5,"+"Game Over! " + xPlayer.getName() + " is the winner!");
+			oSocketOut.println("5,"+"Game Over! " + xPlayer.getName() + " is the winner!");
 			return gameEnd;
 		} else if (theBoard.oWins()) {
 			gameEnd = true;
 			System.out.println("Game Over! O is the winner!");
-			xSocketOut.println("5,"+"Game Over! O is the winner!");
-			oSocketOut.println("5,"+"Game Over! O is the winner!");
+			xSocketOut.println("5,"+"Game Over! " + oPlayer.getName() + " is the winner!");
+			oSocketOut.println("5,"+"Game Over! " + oPlayer.getName() + " is the winner!");
 			return gameEnd;
 		} else if (theBoard.isFull()) {
 			gameEnd = true;

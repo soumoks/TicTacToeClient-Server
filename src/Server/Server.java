@@ -44,7 +44,7 @@ public class Server implements Constants {
 				xSocketOut = new PrintWriter(xSocket.getOutputStream(), true);
 
 				//We need to send one message to the X player until O player joins
-				xSocketOut.println("6," + "Waiting for other player..");
+				xSocketOut.println("6," + "Waiting for other player to connect..");
 				//xSocketOut.close();
 				oSocket = serverSocket.accept();
 				System.out.println("Accepted oPlayer");

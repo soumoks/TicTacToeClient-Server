@@ -8,14 +8,10 @@ public class Player {
 	// private String name;
 	private char mark;
 	private String name;
-	private PrintWriter socketOut;
-	private BufferedReader socketIn;
 
-	public Player(BufferedReader in, PrintWriter out, char mark) {
-		// this.name = name;
-		this.setMark(mark);
-		this.socketIn = in;
-		this.socketOut = out;
+	public Player(char mark,String name) {
+		this.mark = mark;
+		this.name = name;
 	}
 
 	public char getMark() {

@@ -51,7 +51,7 @@ public class GameView extends JFrame {
      * View Constructor that is responsible for accepting user input and creates the frame.
      */
     public GameView(){
-        //playerNameInput();
+        playerNameInput();
         createGameWindow();
     }
 
@@ -165,11 +165,6 @@ public class GameView extends JFrame {
             JOptionPane.showMessageDialog(null, "Please Try again!", " Warning",JOptionPane.PLAIN_MESSAGE);
             name = JOptionPane.showInputDialog("Enter your name");
         }
-//        nameO = JOptionPane.showInputDialog("Enter the name of the O player");
-//        while (nameO == null) {
-//            JOptionPane.showMessageDialog(null, "Please Try again!", " Warning",JOptionPane.PLAIN_MESSAGE);
-//            nameO = JOptionPane.showInputDialog("Enter the name of the O player");
-//        }
     }
 
     /**

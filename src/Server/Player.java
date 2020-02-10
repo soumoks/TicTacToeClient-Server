@@ -7,6 +7,7 @@ public class Player {
 
 	// private String name;
 	private char mark;
+	private String name;
 	private PrintWriter socketOut;
 	private BufferedReader socketIn;
 
@@ -25,4 +26,11 @@ public class Player {
 		this.mark = mark;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

@@ -3,14 +3,11 @@ package Server;
 //STUDENTS SHOULD ADD CLASS COMMENTS, METHOD COMMENTS, FIELD COMMENTS 
 
 
-import java.io.Serializable;
 
 /**
  * The type Board.
  */
-public class Board implements Constants, Serializable {
-	private static final long serialVersionUID = 1L;
-
+public class Board implements Constants {
 	private char theBoard[][];
 	private int markCount;
 

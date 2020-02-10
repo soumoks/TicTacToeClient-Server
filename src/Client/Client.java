@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 import javax.swing.JButton;
 
@@ -15,13 +14,8 @@ public class Client implements Constants {
 	private PrintWriter socketOut;
 	private BufferedReader socketIn;
 	private GameView theView;
-
-
-	public int getChoice() {
-		return choice;
-	}
-
 	private int choice;
+
 
 	public Client(String serverName, int portNumber, GameView theView) {
 		this.theView = theView;
@@ -34,6 +28,16 @@ public class Client implements Constants {
 			socketOut = new PrintWriter(aSocket.getOutputStream(), true);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void sendPlayerName(){
+		String name = "";
+		name = theView.getName();
+		if(name != null){
+			System.out.println("Sending player name " + name + " to server.." );
+			socketOut.println(name);
+			socketOut.flush();
 		}
 	}
 
@@ -52,19 +56,6 @@ public class Client implements Constants {
 		}
 	}
 
-//	public void getPlayerMark() {
-//		// Convert row and columns into a single string
-//		String line = "";
-//		line = row + "," + col;
-//
-//		/*
-//		 * Check if this line is required or can be replaced with something beter
-//		 */
-//		if (line != null && !line.isEmpty()) {
-//			System.out.println("Sending row,col values to server..");
-//			socketOut.println(line);
-//		}
-//	}
 
 	public void setMark(String response) {
 		// We are assuming the response here consists of the row and column of the mark.
@@ -124,39 +115,16 @@ public class Client implements Constants {
 				System.out.println("Server response is: " + response);
 				String [] temp = response.split(",");
 				choice = Integer.parseInt(temp[0]);
-				/**
-				 * Take the logic out here for which method to call
-				 */
-//				if (response != null) {
-//					setPlayer(response.charAt(0));
-//					setMark(response);
-//				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			switchBoard(choice, response);
+			//Send response to switch board only if non-null
+			if(response != null){
+				switchBoard(choice, response);
+			}
 		}
 	}
 
-	public Boolean listenForPermission() {
-		Boolean hasPermission = false;
-		while (true) {
-			String response = "";
-			try {
-				response = socketIn.readLine();
-				System.out.println("Server response is: " + response);
-
-				if (response != null) {
-					if(response.equals("V")){
-						hasPermission = true;
-						break;
-					}
-				}
-			}catch (IOException e){
-				e.printStackTrace();
-			}
-		}return hasPermission;
-	}
 
 	public void setPlayer(String response) {
 		// Checking if the string actually consists of the player Mark
@@ -182,13 +150,16 @@ public class Client implements Constants {
 				//Set player names
 				break;
 			case 3:
-				System.out.println("Entered case 3");
-				ClientController temp = new ClientController(theView,this);
+				//System.out.println("Entered case 3");
+				//Waiting for server to tell me to make a move
+				String [] message2 = response.split(",");
+				theView.setMessageArea(message2[1]);
 
-				System.out.println("Row column values before entering while loop on Controller" + temp.getRowColData()[0]);
+
+				ClientController temp = new ClientController(theView,this);
+				//System.out.println("Row column values before entering while loop on Controller" + temp.getRowColData()[0]);
 				while((temp.getRowColData()[0] == -1)){
 					System.out.println("Entered case 3 while loop");
-					//sendButtonPress(temp.getRowColData()[0],temp.getRowColData()[1]);
 				}
 				sendButtonPress(temp.getRowColData()[0],temp.getRowColData()[1]);
 				//Reset the button as the stream is a buffered reader and we have to reset all the previous content.
@@ -198,11 +169,22 @@ public class Client implements Constants {
 				break;
 			case 4:
 				setMark(response);
+				//Clear the message area after mark has been set. This clears any previous message on the screen.
+				theView.setMessageArea("");
 				break;
 			case 5:
 				//Winner display.
-				// The clients are not allowed to make any more moves
+				String [] message = response.split(",");
+				theView.setMessageArea(message[1]);
 				break;
+			case 6:
+				//Waiting messages from players
+				String [] message3 = response.split(",");
+				theView.setMessageArea(message3[1]);
+			case 7:
+				//Case for sending player name to server.
+				//Ideally, we would be able to send player name without a case but it would be better if the server asks for the name and we send it after that
+				sendPlayerName();
 			default:
 				System.out.println("Invalid choice!");
 		}

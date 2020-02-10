@@ -15,6 +15,10 @@ public class Server implements Constants {
 	// O sockets
 	private Socket oSocket;
 
+	// Printwriter for Xplayers and OPlayers to write messages
+	private PrintWriter xSocketOut;
+	private PrintWriter oSocketOut;
+
 	private ServerSocket serverSocket;
 	private ExecutorService pool;
 	private Board theBoard;
@@ -37,6 +41,11 @@ public class Server implements Constants {
 			while (true) {
 				xSocket = serverSocket.accept();
 				System.out.println("Accepted xPlayer");
+				xSocketOut = new PrintWriter(xSocket.getOutputStream(), true);
+
+				//We need to send one message to the X player until O player joins
+				xSocketOut.println("6," + "Waiting for other player..");
+				//xSocketOut.close();
 				oSocket = serverSocket.accept();
 				System.out.println("Accepted oPlayer");
 

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 import javax.swing.JButton;
 
@@ -15,6 +16,7 @@ public class Client implements Constants {
 	private BufferedReader socketIn;
 	private GameView theView;
 	private int choice;
+	private Boolean isConnected = false;
 
 
     /**
@@ -27,6 +29,7 @@ public class Client implements Constants {
 		this.theView = theView;
 		try {
 			aSocket = new Socket(serverName, portNumber);
+			isConnected = true;
 			// Socket input Stream
 			socketIn = new BufferedReader(new InputStreamReader(aSocket.getInputStream()));
 
@@ -119,14 +122,17 @@ public class Client implements Constants {
      * @throws IOException
      */
 	public void getServerResponse() throws IOException {
-		while (true) {
+		while (isConnected) {
 			String response = "";
 			try {
 				response = socketIn.readLine();
 				System.out.println("Server response is: " + response);
 				String [] temp = response.split(",");
 				choice = Integer.parseInt(temp[0]);
-			} catch (IOException e) {
+			}catch(SocketException e){
+				System.out.println("Socket exception!");
+			}
+			catch (IOException e) {
 				e.printStackTrace();
 			}
 			//Send response to switch board only if non-null
@@ -201,6 +207,14 @@ public class Client implements Constants {
 				//Send player name to server
 				//Ideally, we would be able to send player name without a case but it would be better if the server asks for the name and we send it after that
 				sendPlayerName();
+				break;
+			case 8:
+				//Close all connections
+				socketOut.close();
+				socketIn.close();
+				aSocket.close();
+				//Set flag to false so as to indicate to the client to stop listening for server response
+				isConnected = false;
 				break;
 			default:
 				System.out.println("Invalid choice!");

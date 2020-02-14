@@ -1,10 +1,10 @@
 package Server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,7 +17,6 @@ public class Server implements Constants {
 
 	// Printwriter for Xplayers and OPlayers to write messages
 	private PrintWriter xSocketOut;
-	private PrintWriter oSocketOut;
 
 	private ServerSocket serverSocket;
 	private ExecutorService pool;
@@ -28,7 +27,7 @@ public class Server implements Constants {
 			// Server socket accepts the port as a parameter
 			serverSocket = new ServerSocket(9090);
 			// System.out.println("Server is running!");
-			pool = Executors.newFixedThreadPool(10);
+			pool = Executors.newFixedThreadPool(20);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -45,18 +44,19 @@ public class Server implements Constants {
 
 				//We need to send one message to the X player until O player joins
 				xSocketOut.println("6," + "Waiting for other player to connect..");
-				//xSocketOut.close();
+
 				oSocket = serverSocket.accept();
 				System.out.println("Accepted oPlayer");
-
 				theBoard = new Board();
 
 				Game theGame = new Game(xSocket, oSocket, theBoard);
 				pool.execute(theGame);
-
 			}
 
-		} catch (IOException e) {
+		}catch (SocketException e) {
+			System.out.println("Socket exception!");
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 

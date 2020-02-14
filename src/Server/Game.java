@@ -41,7 +41,6 @@ public class Game implements Runnable, Constants {
 	@Override
 	public void run() {
 		System.out.println("Started game");
-
 		/*
 		X player moves first, followed by O player. Winner is checked on each move and before every move
 		 */
@@ -57,7 +56,25 @@ public class Game implements Runnable, Constants {
 				}
 			}
 		}
-		System.out.println("Game over!");
+
+		//Ask the clients to close connections after game is over
+        xSocketOut.println("8," + "Close all connections");
+        xSocketOut.flush();
+        oSocketOut.println("8," + "Close all connections");
+        oSocketOut.flush();
+        try {
+            //Close all sockets and streams
+            xSocketIn.close();
+            xSocketOut.close();
+            xSocket.close();
+            oSocketIn.close();
+            oSocketOut.close();
+            oSocket.close();
+
+        } catch (IOException e) {
+            System.out.println("Error closing sockets!");
+        }
+        System.out.println("Game over!");
 	}
 
 	/**
